@@ -33,7 +33,8 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
         for info in shape_info.infos:
             to_show = shape_info.src_of(info)
             if is_first:
-                templ_id = shape_det.add_template(to_show, class_id, shape_info.mask_of(info))
+                templ_id = shape_det.add_template(
+                    to_show, class_id, shape_info.mask_of(info))
                 first_id = templ_id
                 first_angle = info.angle
                 if use_rot:
@@ -42,16 +43,15 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
                 h, w = shape_info.src.shape[:2]
                 templ_id = shape_det.add_template_rotate(
                     class_id, first_id, info.angle-first_angle, np.array([w/2.0, h/2.0]))
-            
+
             templ = shape_det.get_templates("test", templ_id)
-            # print(templ_id)
             for f in templ[0].features:
-                # print(f.x, f.y)
-                cv2.circle(to_show, (f.y + templ[0].tl_y, f.x+templ[0].tl_x), 3, (0, 0, 255), -1)
-                
+                cv2.circle(
+                    to_show, (f.y + templ[0].tl_y, f.x+templ[0].tl_x), 3, (0, 0, 255), -1)
+
             cv2.imshow("train", to_show)
             cv2.waitKey(1)
-            
+
             if templ_id != -1:
                 infos_have_templ.append(info)
 
@@ -60,7 +60,7 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
         print("training finished!!!")
     else:
         ids = ["test"]
-        shape_det.read_classes(ids, fpath='./data/test_templ.yaml') 
+        shape_det.read_classes(ids, fpath='./data/test_templ.yaml')
         # templ = shape_det.get_templates("test", 341)
         # for f in templ[0].features:
         #     print(f.y, f.x)
@@ -68,26 +68,25 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
         # angle & scale are saved here, fetched by match id
         shape_info = ShapeInfoProducer(src=None)
         infos = shape_info.load_infos(info_pth="./data/test_info.yaml")
-        
+
         PADDING = 250
         padded_img = np.pad(
             img, ((PADDING, PADDING+1), (PADDING, PADDING+1), (0, 0)), 'constant', constant_values=0)
         STRIDE = 16
         n, m = padded_img.shape[0] // STRIDE, padded_img.shape[1] // STRIDE
         match_img = padded_img[:n*16, :m*16]
-        
+
         matches = shape_det.match(match_img, 80, ids)
         if len(matches) == 0:
             print("not match anything")
             exit(0)
-        if len(img.shape)==2 or img.shape[2] == 1:
+        if len(img.shape) == 2 or img.shape[2] == 1:
             match_img = cv2.cvtColor(match_img, cv2.COLOR_GRAY2BGR)
-        # for match in matches:
-        #     print("match x:{}, y:{}".format(match.x, match.y))
+
         top5 = 1
         if top5 > len(matches):
             top5 = len(matches)
-        
+
         for i in range(top5):
             match = matches[i]
             templ = shape_det.get_templates("test", match.template_id)
@@ -98,24 +97,25 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
             r_scaled = 270 / 2.0 * infos[match.template_id].scale
             # scaling won't affect this, because it has been determined by warpAffine
             # // cv::warpAffine(src, dst, rot_mat, src.size()); last param
-            train_img_half_width = 270/ 2.0 + 100
+            train_img_half_width = 270 / 2.0 + 100
             train_img_half_height = 270 / 2.0 + 100
-            
+
             x = match.x - templ[0].tl_x + train_img_half_width
             y = match.y - templ[0].tl_y + train_img_half_height
 
             for f in templ[0].features:
-                cv2.circle(match_img, (int(f.y+match.x), int(f.x+match.y)), 3, (0, 255, 0), -1)
-            
-            cv2.putText(match_img, "{}".format(match.similarity), 
-                        (int(match.x+r_scaled-10), int(match.y-3)), 
+                cv2.circle(match_img, (int(f.y+match.x),
+                                       int(f.x+match.y)), 3, (0, 255, 0), -1)
+
+            cv2.putText(match_img, "{}".format(match.similarity),
+                        (int(match.x+r_scaled-10), int(match.y-3)),
                         cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255))
 
         cv2.imshow("match img", match_img)
+        cv2.imwrite("./data/result.jpg", match_img)
         cv2.waitKey(0)
     cv2.destroyAllWindows()
-               
-    
+
 
 if __name__ == "__main__":
-    angle_test("test", True, "./data/test.png")
+    angle_test("test", True, "./data/case2/test1.bmp")
