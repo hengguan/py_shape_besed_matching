@@ -281,8 +281,6 @@ class ShapeDetector(object):
             # @todo Factor this out into separate function
             lowest_lm = lm_pyramid[-1]
             # Compute similarity maps for each ColorGradient at lowest pyramid level
-            # candidates = []
-            # lowest_start = len(tp) - 1
             lowest_T = self.T_at_level[-1]
             num_features = 0
             templ = tp[-1]
@@ -330,8 +328,8 @@ class ShapeDetector(object):
                     match2.similarity = np.max(scores)
                     # r = best_ind % scores.shape[1]
                     # c = best_ind // scores.shape[1]
-                    match2.x = (x / T - 8 + c) * T + offset
-                    match2.y = (y / T - 8 + r) * T + offset
+                    match2.x = (x / T - 8 + r) * T + offset
+                    match2.y = (y / T - 8 + c) * T + offset
 
                 new_candidates = list(
                     filter(lambda x: x.similarity >= threshold, candidates))
@@ -381,8 +379,9 @@ class ShapeDetector(object):
                                              threshold, class_id, self.temp_class_map[class_id])
         print("length of matches: ", len(matches))
         # Sort matches by similarity, and prune any duplicates introduced by pyramid refinement
-        matches_sorted = sorted(matches, key=lambda x: (
-            x.similarity, x.template_id), reverse=True)
+        matches_sorted = sorted(matches, 
+                                key=lambda x: (x.similarity, x.template_id), 
+                                reverse=True)
         matches_filter = list()
         for ms in matches_sorted:
             if len(matches_filter) <= 0:

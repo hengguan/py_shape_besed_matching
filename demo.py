@@ -4,6 +4,7 @@ import os
 
 from matching2d import ShapeDetector
 from shape_info_produce import ShapeInfoProducer
+import argparse
 
 
 def angle_test(mode="test", use_rot=True, img_pth="./data"):
@@ -16,7 +17,7 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
         print(mask.shape, img.shape)
 
         # padding to avoid rotating out
-        PADDING = 99
+        PADDING = 29
         padded_img = np.pad(
             img, ((PADDING, PADDING+1), (PADDING, PADDING+1), (0, 0)), 'constant', constant_values=0)
         padded_mask = np.pad(
@@ -69,14 +70,14 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
         shape_info = ShapeInfoProducer(src=None)
         infos = shape_info.load_infos(info_pth="./data/test_info.yaml")
 
-        PADDING = 250
+        PADDING = 50
         padded_img = np.pad(
             img, ((PADDING, PADDING+1), (PADDING, PADDING+1), (0, 0)), 'constant', constant_values=0)
         STRIDE = 16
         n, m = padded_img.shape[0] // STRIDE, padded_img.shape[1] // STRIDE
         match_img = padded_img[:n*16, :m*16]
 
-        matches = shape_det.match(match_img, 80, ids)
+        matches = shape_det.match(match_img, 90, ids)
         if len(matches) == 0:
             print("not match anything")
             exit(0)
@@ -107,9 +108,9 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
                 cv2.circle(match_img, (int(f.y+match.x),
                                        int(f.x+match.y)), 3, (0, 255, 0), -1)
 
-            cv2.putText(match_img, "{}".format(match.similarity),
+            cv2.putText(match_img, "{:.2f}".format(match.similarity),
                         (int(match.x+r_scaled-10), int(match.y-3)),
-                        cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 255))
+                        cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255))
 
         cv2.imshow("match img", match_img)
         cv2.imwrite("./data/result.jpg", match_img)
@@ -118,4 +119,13 @@ def angle_test(mode="test", use_rot=True, img_pth="./data"):
 
 
 if __name__ == "__main__":
-    angle_test("test", True, "./data/case2/test1.bmp")
+    parser = argparse.ArgumentParser(description='Shape besed matching implemented by python.')
+    parser.add_argument('--mode', type=str, 
+                        help='an integer for the accumulator')
+    parser.add_argument('--rot', type=bool, 
+                        help='sum the integers (default: find the max)')
+    parser.add_argument('--img-pth', type=str, 
+                        help='sum the integers (default: find the max)')
+    args = parser.parse_args()
+    
+    angle_test(args.mode, args.rot, args.img_pth)
